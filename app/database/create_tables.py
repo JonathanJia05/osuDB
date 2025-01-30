@@ -1,5 +1,5 @@
 import psycopg2
-from config import load_config
+from .config import load_config
 
 
 def create_tables():
@@ -13,7 +13,8 @@ def create_tables():
             Difficulty TEXT,
             Md5 TEXT UNIQUE,
             Mode INTEGER,
-            Stars REAL
+            Stars REAL,
+            OsuURL TEXT
         )
         """
     ]
