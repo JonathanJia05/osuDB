@@ -1,6 +1,8 @@
 # osuDB
 Project I made so that anyone can have easy access to the 170k+ ranked maps currently in osu. Used in conjunction with [osdbParser](https://github.com/JonathanJia05/osdbParser) to create the json files to be processed. 
 
+- working on creating a RESTful API so that users don't need to request and retrieve data through the postgres CLI (Although using PGAdmin 4 is useful)
+
 ## Setup
 
 ### 1. Clone repo
