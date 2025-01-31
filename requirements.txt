@@ -5,3 +5,4 @@ rosu-pp-py==2.0.1
 python-dotenv==1.0.1
 pydantic==2.10.5
 uvicorn==0.34.0
+psycopg2==2.9.10
