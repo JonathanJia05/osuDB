@@ -3,6 +3,5 @@ __pycache__/
 *.pyc
 *.pyo
 .env
-data/
 database.ini
 notes.md
