@@ -7,7 +7,6 @@ from dotenv import load_dotenv
 from aiolimiter import AsyncLimiter
 from .config import load_config
 
-
 load_dotenv(override=True)
 
 OSU_BASE_URL = "https://osu.ppy.sh/api/v2"
@@ -15,13 +14,11 @@ OSU_AUTH_URL = "https://osu.ppy.sh/oauth/token"
 CLIENT_ID = os.getenv("CLIENT_ID")
 CLIENT_SECRET = os.getenv("CLIENT_SECRET")
 
-limiter = AsyncLimiter(max_rate=1200, time_period=60)
+limiter = AsyncLimiter(max_rate=370, time_period=60)
 
 
 async def authenticate(client: httpx.AsyncClient) -> str:
-    """
-    Authenticate with the osu! API and return an access token.
-    """
+
     payload = {
         "grant_type": "client_credentials",
         "client_id": CLIENT_ID,
@@ -52,7 +49,11 @@ async def fetch_map_details(map_id: int, client: httpx.AsyncClient, access_token
     if not max_combo and "max_combo" in statistics:
         max_combo = statistics["max_combo"]
 
-    return map_id, play_count, max_combo
+    beatmapset = data.get("beatmapset", {})
+    covers = beatmapset.get("covers", {})
+    imgurl = covers.get("card", "")
+
+    return map_id, play_count, max_combo, imgurl
 
 
 async def update_all_maps():
@@ -76,7 +77,7 @@ async def update_all_maps():
         tasks = [fetch_map_details(map_id, client, access_token) for map_id in map_ids]
 
         results = []
-        batch_size = 1000
+        batch_size = 370
         total_batches = (len(tasks) + batch_size - 1) // batch_size
         for i in range(0, len(tasks), batch_size):
             batch_tasks = tasks[i : i + batch_size]
@@ -89,7 +90,8 @@ async def update_all_maps():
             print(f"Processed batch {(i // batch_size) + 1} of {total_batches}")
 
     update_data = [
-        (play_count, max_combo, map_id) for map_id, play_count, max_combo in results
+        (play_count, max_combo, imgurl, map_id)
+        for map_id, play_count, max_combo, imgurl in results
     ]
 
     try:
@@ -99,9 +101,9 @@ async def update_all_maps():
                     UPDATE beatmaps
                     SET playcount = %s,
                         max_combo = %s,
+                        imgurl = %s
                     WHERE MapID = %s;
                 """
-
                 execute_batch(cur, update_sql, update_data, page_size=100)
             conn.commit()
         print(f"Updated extra fields for {len(update_data)} beatmaps")
