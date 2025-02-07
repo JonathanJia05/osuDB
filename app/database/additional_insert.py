@@ -18,7 +18,9 @@ limiter = AsyncLimiter(max_rate=370, time_period=60)
 
 
 async def authenticate(client: httpx.AsyncClient) -> str:
-
+    """
+    Authenticate with the osu! API and return an access token.
+    """
     payload = {
         "grant_type": "client_credentials",
         "client_id": CLIENT_ID,
@@ -33,7 +35,10 @@ async def authenticate(client: httpx.AsyncClient) -> str:
 
 
 async def fetch_map_details(map_id: int, client: httpx.AsyncClient, access_token: str):
-
+    """
+    Fetch details for a beatmap using its map_id.
+    Returns a tuple: (map_id, play_count, max_combo, imgurl)
+    """
     headers = {"Authorization": f"Bearer {access_token}"}
     url = f"{OSU_BASE_URL}/beatmaps/{map_id}"
 
@@ -63,12 +68,12 @@ async def update_all_maps():
     try:
         with psycopg2.connect(**config) as conn:
             with conn.cursor() as cur:
-                cur.execute("SELECT MapID FROM beatmaps;")
+                cur.execute("SELECT mapid FROM beatmaps;")
                 rows = cur.fetchall()
                 map_ids = [row[0] for row in rows]
         print(f"Found {len(map_ids)} beatmaps to update")
     except Exception as e:
-        print("Error fetching MapIDs:", e)
+        print("Error fetching map IDs:", e)
         return
 
     async with httpx.AsyncClient() as client:
@@ -90,8 +95,7 @@ async def update_all_maps():
             print(f"Processed batch {(i // batch_size) + 1} of {total_batches}")
 
     update_data = [
-        (play_count, max_combo, imgurl, map_id)
-        for map_id, play_count, max_combo, imgurl in results
+        (play_count, max_combo, map_id) for map_id, play_count, max_combo, _ in results
     ]
 
     try:
@@ -100,9 +104,8 @@ async def update_all_maps():
                 update_sql = """
                     UPDATE beatmaps
                     SET playcount = %s,
-                        max_combo = %s,
-                        imgurl = %s
-                    WHERE MapID = %s;
+                        max_combo = %s
+                    WHERE mapid = %s;
                 """
                 execute_batch(cur, update_sql, update_data, page_size=100)
             conn.commit()
